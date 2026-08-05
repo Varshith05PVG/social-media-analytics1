@@ -1,0 +1,1034 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛡️ GuardianAI - Social Media Scam Detector</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --success: #10b981;
+            --neutral: #1f2937;
+            --light: #f9fafb;
+            --border: #e5e7eb;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+            color: #fff;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px 0;
+            animation: slideDown 0.6s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #6366f1, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            font-size: 18px;
+            color: #cbd5e1;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+
+        /* Main content */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Card styles */
+        .card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 16px;
+            padding: 30px;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(99, 102, 241, 0.4);
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Input section */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            gap: 10px;
+        }
+
+        input[type="text"],
+        select {
+            flex: 1;
+            padding: 12px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        input[type="text"]::placeholder {
+            color: #64748b;
+        }
+
+        /* Button */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Pipeline visualization */
+        .pipeline {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .pipeline-step {
+            flex: 1;
+            min-width: 120px;
+            text-align: center;
+            padding: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            font-size: 12px;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pipeline-step.loading {
+            animation: pulse 1s infinite;
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+        }
+
+        .pipeline-step.completed {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .pipeline-arrow {
+            font-size: 20px;
+            color: #64748b;
+            margin: 0 -10px;
+        }
+
+        @media (max-width: 768px) {
+            .pipeline {
+                flex-direction: column;
+            }
+            .pipeline-arrow {
+                transform: rotate(90deg);
+                margin: -5px 0;
+            }
+        }
+
+        /* Results section */
+        .results-section {
+            margin-top: 40px;
+        }
+
+        .risk-score-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .risk-score-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .risk-score {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 2px solid;
+            border-radius: 16px;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .risk-score.critical {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .risk-score.high {
+            border-color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        .risk-score.medium {
+            border-color: #eab308;
+            background: rgba(234, 179, 8, 0.1);
+        }
+
+        .risk-score.low {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .risk-percentage {
+            font-size: 48px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .risk-critical { color: #ef4444; }
+        .risk-high { color: #f59e0b; }
+        .risk-medium { color: #eab308; }
+        .risk-low { color: #10b981; }
+
+        .risk-level {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .risk-confidence {
+            font-size: 12px;
+            color: #cbd5e1;
+            margin-top: 10px;
+        }
+
+        /* Analysis table */
+        .analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .analysis-table th {
+            background: rgba(99, 102, 241, 0.1);
+            padding: 12px;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .analysis-table td {
+            padding: 12px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+            font-size: 13px;
+        }
+
+        .severity-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .severity-high {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+        }
+
+        .severity-medium {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fed7aa;
+        }
+
+        .severity-low {
+            background: rgba(16, 185, 129, 0.2);
+            color: #a7f3d0;
+        }
+
+        /* Recommendations */
+        .recommendations {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-left: 4px solid #6366f1;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .recommendations h3 {
+            font-size: 16px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .recommendations ul {
+            list-style: none;
+        }
+
+        .recommendations li {
+            padding: 8px 0;
+            padding-left: 24px;
+            position: relative;
+            font-size: 14px;
+            color: #cbd5e1;
+        }
+
+        .recommendations li::before {
+            content: '▸';
+            position: absolute;
+            left: 0;
+            color: #6366f1;
+            font-weight: bold;
+        }
+
+        /* Loading state */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            border-top-color: #6366f1;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Error handling */
+        .error-message {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: #fca5a5;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: #64748b;
+            font-size: 12px;
+            margin-top: 60px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            header {
+                margin-bottom: 25px;
+                padding: 20px 10px 0;
+            }
+
+            .logo {
+                font-size: 36px;
+            }
+
+            .tagline {
+                font-size: 16px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .input-wrapper {
+                flex-direction: column;
+            }
+        }
+
+        /* Animation for result appearance */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Profile info section */
+        .profile-info {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+            align-items: center;
+        }
+
+        .profile-pic {
+            width: 100px;
+            height: 100px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid rgba(99, 102, 241, 0.3);
+        }
+
+        .profile-meta {
+            flex: 1;
+        }
+
+        .profile-meta h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .profile-meta .bio {
+            color: #cbd5e1;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .profile-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+        }
+
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat .value {
+            font-weight: 600;
+            color: #6366f1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <div class="logo">🛡️ GuardianAI</div>
+            <div class="tagline">Social Media Scam & Fake Profile Detector</div>
+            <div class="subtitle">CV + Web Mining Fusion Model | Powered by AI</div>
+        </header>
+
+        <!-- Input Section -->
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-title">
+                    <span>🔍 Analyze Profile</span>
+                </div>
+                
+                <div class="input-group">
+                    <div class="input-wrapper">
+                        <input 
+                            type="text" 
+                            id="profileUrl" 
+                            placeholder="Enter profile URL (e.g., https://instagram.com/username)"
+                            value="https://instagram.com/cristiano"
+                        >
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <select id="platform" style="flex: 1;">
+                        <option value="instagram">Instagram</option>
+                        <option value="facebook">Facebook</option>
+                        <option value="twitter">Twitter/X</option>
+                        <option value="tiktok">TikTok</option>
+                    </select>
+                    <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeProfile()">
+                        <span id="btnText">🚀 Analyze</span>
+                        <span id="spinner" class="loading-spinner hidden"></span>
+                    </button>
+                </div>
+
+                <div id="errorMessage" class="error-message hidden"></div>
+            </div>
+
+            <!-- Pipeline Visualization -->
+            <div class="card">
+                <div class="card-title">
+                    <span>⚙️ Analysis Pipeline</span>
+                </div>
+                
+                <div class="pipeline" id="pipeline">
+                    <div class="pipeline-step" id="step1">
+                        <div style="font-size: 18px; margin-bottom: 5px;">📥</div>
+                        <div>Input</div>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-step" id="step2">
+                        <div style="font-size: 18px; margin-bottom: 5px;">🖼️</div>
+                        <div>CV Analysis</div>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-step" id="step3">
+                        <div style="font-size: 18px; margin-bottom: 5px;">🌐</div>
+                        <div>Web Mining</div>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-step" id="step4">
+                        <div style="font-size: 18px; margin-bottom: 5px;">🔗</div>
+                        <div>Fusion</div>
+                    </div>
+                    <div class="pipeline-arrow">→</div>
+                    <div class="pipeline-step" id="step5">
+                        <div style="font-size: 18px; margin-bottom: 5px;">📊</div>
+                        <div>Output</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-section hidden">
+            <!-- Profile Info -->
+            <div class="card fade-in">
+                <div class="profile-info" id="profileInfo"></div>
+            </div>
+
+            <!-- Risk Scores -->
+            <div class="risk-score-container">
+                <div class="card">
+                    <div class="card-title">📊 Overall Risk Assessment</div>
+                    <div class="risk-score" id="riskScoreDisplay"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">confidence</div>
+                    <div id="confidenceDisplay"></div>
+                </div>
+            </div>
+
+            <!-- CV Analysis -->
+            <div class="card fade-in">
+                <div class="card-title">🖼️ Computer Vision Analysis</div>
+                <table class="analysis-table" id="cvTable"></table>
+            </div>
+
+            <!-- Web Mining Analysis -->
+            <div class="card fade-in">
+                <div class="card-title">🌐 Web Mining Analysis</div>
+                <table class="analysis-table" id="webTable"></table>
+            </div>
+
+            <!-- Top Signals -->
+            <div class="card fade-in">
+                <div class="card-title">⚠️ Top Risk Signals</div>
+                <table class="analysis-table" id="signalsTable"></table>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="recommendations" id="recommendationsDisplay"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>🛡️ GuardianAI © 2026 | Hybrid CV + Web Mining Detection | Hackathon Edition</p>
+        <p>Stay safe online • Report suspicious profiles • Protect your community</p>
+    </footer>
+
+    <script>
+        async function analyzeProfile() {
+            const url = document.getElementById('profileUrl').value;
+            const platform = document.getElementById('platform').value;
+            const btn = document.getElementById('analyzeBtn');
+            const btnText = document.getElementById('btnText');
+            const spinner = document.getElementById('spinner');
+            const errorMsg = document.getElementById('errorMessage');
+
+            // Validation
+            if (!url || url.trim() === '') {
+                showError('Please enter a profile URL');
+                return;
+            }
+
+            // Disable button and show spinner
+            btn.disabled = true;
+            btnText.textContent = 'Analyzing...';
+            spinner.classList.remove('hidden');
+            errorMsg.classList.add('hidden');
+
+            // Reset pipeline
+            resetPipeline();
+
+            try {
+                // Start analysis
+                updatePipeline('step1', 'completed');
+
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url, platform })
+                });
+
+                if (!response.ok) {
+                    throw new Error('Analysis failed');
+                }
+
+                const data = await response.json();
+
+                // Update pipeline steps
+                simulatePipelineSteps(data);
+
+                // Display results
+                displayResults(data);
+
+                // Show results section
+                document.getElementById('resultsSection').classList.remove('hidden');
+
+            } catch (error) {
+                showError(error.message || 'An error occurred during analysis');
+                resetPipeline();
+            } finally {
+                // Re-enable button
+                btn.disabled = false;
+                btnText.textContent = '🚀 Analyze';
+                spinner.classList.add('hidden');
+            }
+        }
+
+        function resetPipeline() {
+            for (let i = 1; i <= 5; i++) {
+                const step = document.getElementById(`step${i}`);
+                step.classList.remove('loading', 'completed');
+            }
+        }
+
+        function updatePipeline(stepId, status) {
+            const step = document.getElementById(stepId);
+            if (status === 'loading') {
+                step.classList.add('loading');
+                step.classList.remove('completed');
+            } else if (status === 'completed') {
+                step.classList.remove('loading');
+                step.classList.add('completed');
+            }
+        }
+
+        function simulatePipelineSteps(data) {
+            const steps = ['step2', 'step3', 'step4', 'step5'];
+            let delay = 0;
+
+            steps.forEach((step, index) => {
+                setTimeout(() => {
+                    updatePipeline(step, 'loading');
+                }, delay);
+                delay += 800;
+
+                setTimeout(() => {
+                    updatePipeline(step, 'completed');
+                }, delay + 600);
+            });
+        }
+
+        function displayResults(data) {
+            const fusion = data.fusion_result;
+            const cvAnalysis = data.cv_analysis;
+            const webMining = data.web_mining;
+            const profileInfo = data.profile_info;
+
+            // Profile info
+            displayProfileInfo(profileInfo);
+
+            // Risk score
+            displayRiskScore(fusion);
+
+            // Confidence
+            displayConfidence(fusion);
+
+            // CV Analysis
+            displayCVAnalysis(cvAnalysis);
+
+            // Web Mining
+            displayWebMining(webMining);
+
+            // Top Signals
+            displayTopSignals(fusion);
+
+            // Recommendations
+            displayRecommendations(fusion);
+        }
+
+        function displayProfileInfo(profile) {
+            // Debug: Log the profile data
+            console.log('Profile data:', profile);
+            console.log('Profile pic URL:', profile.profile_pic_url);
+            
+            // Better image handling with multiple fallbacks
+            let imageUrl = profile.profile_pic_url;
+            
+            // Check if it's a valid URL
+            if (!imageUrl || imageUrl.includes('placeholder') || !imageUrl.startsWith('http')) {
+                imageUrl = `https://via.placeholder.com/150/6366f1/ffffff?text=${encodeURIComponent(profile.username || 'Profile')}`;
+            }
+            
+            // For Instagram images, use the proxy to avoid CORS issues
+            if (profile.platform === 'instagram' && imageUrl.includes('instagram.com')) {
+                imageUrl = `/api/proxy-image?url=${encodeURIComponent(imageUrl)}`;
+            }
+            
+            // For demo data, use a nice placeholder
+            if (profile.demo) {
+                imageUrl = `https://via.placeholder.com/150/6366f1/ffffff?text=${encodeURIComponent((profile.username || 'Demo').substring(0, 10))}`;
+            }
+            
+            const html = `
+                <img src="${imageUrl}" 
+                     alt="Profile Picture" 
+                     class="profile-pic" 
+                     onerror="handleImageError(this, '${profile.platform}')"
+                     onload="console.log('Image loaded successfully:', this.src)">
+                <div class="profile-meta">
+                    <h2>@${profile.username || 'Unknown'}</h2>
+                    <div class="bio">${profile.full_name || 'No name available'}</div>
+                    <div class="profile-stats">
+                        <div class="stat">👥 <span class="value">${(profile.followers || 0).toLocaleString()}</span> Followers</div>
+                        <div class="stat">🔗 <span class="value">${(profile.following || 0).toLocaleString()}</span> Following</div>
+                        ${profile.is_verified ? '<div class="stat">✓ Verified</div>' : ''}
+                        ${profile.is_business ? '<div class="stat">💼 Business</div>' : ''}
+                    </div>
+                </div>
+            `;
+            document.getElementById('profileInfo').innerHTML = html;
+        }
+
+        // Enhanced image error handling
+        function handleImageError(img, platform) {
+            console.log('Image failed to load:', img.src, 'Platform:', platform);
+            
+            // Try different fallback images based on platform
+            const fallbacks = {
+                'instagram': 'https://via.placeholder.com/150/e4405f/ffffff?text=Instagram',
+                'facebook': 'https://via.placeholder.com/150/1877f2/ffffff?text=Facebook', 
+                'twitter': 'https://via.placeholder.com/150/1da1f2/ffffff?text=Twitter',
+                'tiktok': 'https://via.placeholder.com/150/000000/ffffff?text=TikTok'
+            };
+            
+            const fallbackUrl = fallbacks[platform] || 'https://via.placeholder.com/150/6366f1/ffffff?text=Profile';
+            
+            if (img.src !== fallbackUrl) {
+                console.log('Trying fallback image:', fallbackUrl);
+                img.src = fallbackUrl;
+            } else {
+                console.log('All image sources failed');
+                // Create a text-based placeholder
+                img.style.display = 'none';
+                const parent = img.parentElement;
+                const textPlaceholder = document.createElement('div');
+                textPlaceholder.style.cssText = `
+                    width: 100px;
+                    height: 100px;
+                    border-radius: 12px;
+                    background: linear-gradient(135deg, #6366f1, #4f46e5);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-size: 24px;
+                    font-weight: bold;
+                    border: 2px solid rgba(99, 102, 241, 0.3);
+                `;
+                textPlaceholder.textContent = platform.charAt(0).toUpperCase();
+                parent.insertBefore(textPlaceholder, img);
+            }
+        }
+
+        function displayRiskScore(fusion) {
+            const riskLevel = fusion.risk_level.toLowerCase();
+            const percentage = fusion.overall_scam_likelihood;
+            const emoji = {
+                'critical': '🚨',
+                'high': '⚠️',
+                'medium': '⚡',
+                'low': '✅'
+            }[riskLevel];
+
+            const html = `
+                <div style="text-align: center;">
+                    <div style="font-size: 40px; margin-bottom: 10px;">${emoji}</div>
+                    <div class="risk-percentage risk-${riskLevel}">${percentage}%</div>
+                    <div class="risk-level">${fusion.risk_level} RISK</div>
+                    <div class="risk-confidence">
+                        Confidence: ${fusion.confidence.description}
+                    </div>
+                </div>
+            `;
+            document.querySelector('.risk-score').classList.add(`risk-${riskLevel}`);
+            document.getElementById('riskScoreDisplay').innerHTML = html;
+        }
+
+        function displayConfidence(fusion) {
+            const conf = fusion.confidence;
+            const html = `
+                <div class="card">
+                    <div style="margin-bottom: 20px;">
+                        <div style="font-size: 32px; color: #6366f1; font-weight: bold; margin-bottom: 5px;">
+                            ${conf.score}%
+                        </div>
+                        <div style="color: #cbd5e1; font-size: 14px;">Overall Confidence</div>
+                    </div>
+                    <div style="border-top: 1px solid rgba(148, 163, 184, 0.2); padding-top: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 13px;">
+                            <span>CV Confidence:</span>
+                            <span style="color: #6366f1;">${conf.cv_confidence}%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span>Web Confidence:</span>
+                            <span style="color: #6366f1;">${conf.web_confidence}%</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('confidenceDisplay').innerHTML = html;
+        }
+
+        function displayCVAnalysis(cv) {
+            const items = [
+                { name: 'Profile Picture Authenticity', data: cv.profile_picture_authenticity },
+                { name: 'Image Metadata', data: cv.image_metadata },
+                { name: 'Face Consistency', data: cv.face_consistency },
+                { name: 'Image Quality', data: cv.image_quality },
+                { name: 'Logo/Watermark', data: cv.logo_watermark }
+            ];
+
+            let html = '<tr><th>Feature</th><th>Status</th><th>Severity</th></tr>';
+            items.forEach(item => {
+                const severity = item.data.severity.toLowerCase();
+                html += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td style="color: #cbd5e1; font-size: 12px;">${item.data.details}</td>
+                        <td><span class="severity-badge severity-${severity}">${item.data.severity}</span></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('cvTable').innerHTML = html;
+        }
+
+        function displayWebMining(web) {
+            const items = [
+                { name: 'Link Analysis', data: web.link_analysis },
+                { name: 'Posting Frequency', data: web.posting_frequency },
+                { name: 'Text Mining', data: web.text_mining },
+                { name: 'Network Graph', data: web.network_graph },
+                { name: 'Language Quality', data: web.sentiment_language }
+            ];
+
+            let html = '<tr><th>Signal</th><th>Status</th><th>Severity</th></tr>';
+            items.forEach(item => {
+                const severity = item.data.severity.toLowerCase();
+                html += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td style="color: #cbd5e1; font-size: 12px;">${item.data.details}</td>
+                        <td><span class="severity-badge severity-${severity}">${item.data.severity}</span></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('webTable').innerHTML = html;
+        }
+
+        function displayTopSignals(fusion) {
+            const signals = fusion.top_signals;
+            let html = '<tr><th>Signal</th><th>Finding</th><th>Severity</th></tr>';
+
+            signals.forEach(signal => {
+                const severity = signal.severity.toLowerCase();
+                html += `
+                    <tr>
+                        <td><strong>${signal.name}</strong></td>
+                        <td style="color: #cbd5e1; font-size: 12px;">${signal.details}</td>
+                        <td><span class="severity-badge severity-${severity}">${signal.severity}</span></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('signalsTable').innerHTML = html;
+        }
+
+        function displayRecommendations(fusion) {
+            const recs = fusion.recommendations;
+            let html = '<h3>✅ Recommended Actions</h3><ul>';
+
+            recs.forEach(rec => {
+                html += `<li>${rec}</li>`;
+            });
+
+            html += '</ul>';
+            document.getElementById('recommendationsDisplay').innerHTML = html;
+        }
+
+        function showError(message) {
+            const errorMsg = document.getElementById('errorMessage');
+            errorMsg.textContent = '❌ ' + message;
+            errorMsg.classList.remove('hidden');
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('resultsSection').classList.add('hidden');
+        });
+
+        // Allow Enter key to trigger analysis
+        document.getElementById('profileUrl').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                analyzeProfile();
+            }
+        });
+    </script>
+</body>
+</html>
