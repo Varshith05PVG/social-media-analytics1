@@ -26,37 +26,39 @@ def proxy_image():
     image_url = request.args.get('url')
     if not image_url:
         return jsonify({'error': 'No URL provided'}), 400
-    
+
     try:
-        # Only allow certain domains for security
-        allowed_domains = ['instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com', 'via.placeholder.com']
         from urllib.parse import urlparse
+        allowed_domains = ['instagram.com', 'facebook.com', 'twitter.com', 'tiktok.com', 'via.placeholder.com']
         domain = urlparse(image_url).netloc
-        
+
         if not any(allowed_domain in domain for allowed_domain in allowed_domains):
             return jsonify({'error': 'Domain not allowed'}), 403
-        
+
         response = requests.get(image_url, timeout=10, stream=True)
         return Response(
             response.content,
             content_type=response.headers.get('content-type', 'image/jpeg'),
             headers={'Access-Control-Allow-Origin': '*'}
         )
-    except Exception as e:
-        # Return a default image
+    except Exception:
         default_response = requests.get('https://via.placeholder.com/150/6366f1/ffffff?text=Error', timeout=5)
         return Response(
             default_response.content,
             content_type='image/jpeg',
             headers={'Access-Control-Allow-Origin': '*'}
         )
-    data = request.json
-    profile_url = data.get('url', '')
+
+
+@app.route('/api/analyze', methods=['POST'])
+def analyze_profile():
+    data = request.get_json(silent=True) or {}
+    profile_url = (data.get('url') or '').strip()
     platform = data.get('platform', 'instagram')
-    
+
     if not profile_url:
         return jsonify({'error': 'URL is required'}), 400
-    
+
     results = {
         'url': profile_url,
         'platform': platform,
@@ -64,61 +66,51 @@ def proxy_image():
         'cv_analysis': None,
         'web_mining': None,
         'fusion_result': None,
+        'profile_info': None,
         'pipeline': []
     }
-    
+
     try:
-        # Step 1: Extract profile info
         results['pipeline'].append({
             'step': 'Fetching profile data',
             'status': 'processing',
             'timestamp': datetime.now().isoformat()
         })
-        
+
         username = profile_url.rstrip('/').split('/')[-1]
         profile_info = fetch_profile_data(username, platform)
-        
         results['pipeline'][-1]['status'] = 'completed'
         results['profile_info'] = profile_info
-        
-        # Step 2: CV Analysis
+
         results['pipeline'].append({
             'step': 'Analyzing profile picture (CV)',
             'status': 'processing',
             'timestamp': datetime.now().isoformat()
         })
-        
         cv_results = cv_analyzer.analyze(profile_info)
         results['cv_analysis'] = cv_results
-        
         results['pipeline'][-1]['status'] = 'completed'
-        
-        # Step 3: Web Mining
+
         results['pipeline'].append({
             'step': 'Mining web signals',
             'status': 'processing',
             'timestamp': datetime.now().isoformat()
         })
-        
         web_results = web_miner.analyze(profile_info)
         results['web_mining'] = web_results
-        
         results['pipeline'][-1]['status'] = 'completed'
-        
-        # Step 4: Fusion
+
         results['pipeline'].append({
             'step': 'Fusing CV + Web signals',
             'status': 'processing',
             'timestamp': datetime.now().isoformat()
         })
-        
         fusion_results = fusion_model.fuse(cv_results, web_results, profile_info)
         results['fusion_result'] = fusion_results
-        
         results['pipeline'][-1]['status'] = 'completed'
-        
+
         return jsonify(results), 200
-        
+
     except Exception as e:
         results['error'] = str(e)
         return jsonify(results), 500
